@@ -6,13 +6,12 @@ import { SOURCE_COLORS } from "../src/config";
  * Embed parity tests.
  *
  * The colours are load-bearing: the operator specified shinigami red,
- * voratoon orange, ikiru green, and the frontend uses the same palette.
+ * voratoon orange, and the frontend uses the same palette.
  */
 describe("source colours", () => {
   it("matches the agreed palette", () => {
     expect(colorFor("shinigami")).toBe(0xef4444); // red
     expect(colorFor("voratoon")).toBe(0xf97316); // orange
-    expect(colorFor("ikiru")).toBe(0x22c55e); // green
   });
 
   it("falls back to grey for an unknown source", () => {
@@ -22,13 +21,11 @@ describe("source colours", () => {
   it("exposes the palette so the frontend can be kept in sync", () => {
     expect(SOURCE_COLORS.shinigami).toBe(0xef4444);
     expect(SOURCE_COLORS.voratoon).toBe(0xf97316);
-    expect(SOURCE_COLORS.ikiru).toBe(0x22c55e);
   });
 });
 
 describe("labels", () => {
   it("uses the display name", () => {
-    expect(labelFor("ikiru")).toBe("Ikiru");
     expect(labelFor("shinigami")).toBe("Shinigami");
     expect(labelFor("voratoon")).toBe("Voratoon");
   });
@@ -40,7 +37,7 @@ describe("buildEmbed", () => {
     chapters: ["120"],
     chapterUrls: ["https://example.com/ch-120"],
     seriesUrl: "https://example.com/series/solo",
-    source: "ikiru",
+    source: "voratoon",
     cover: "https://cdn.example.com/cover.jpg",
     rating: 8.5,
     genres: ["Action", "Fantasy"],
@@ -49,7 +46,7 @@ describe("buildEmbed", () => {
   };
 
   it("sets the colour from the source", () => {
-    expect(buildEmbed(base).color).toBe(0x22c55e);
+    expect(buildEmbed(base).color).toBe(0xf97316);
   });
 
   it("links a single chapter", () => {
@@ -90,7 +87,7 @@ describe("buildEmbed", () => {
   it("renders the source as a label, not the raw key", () => {
     const embed = buildEmbed(base);
     const fields = embed.fields as Array<{ name: string; value: string }>;
-    expect(fields.find((f) => f.name === "🔗 Source")?.value).toBe("`Ikiru`");
+    expect(fields.find((f) => f.name === "🔗 Source")?.value).toBe("`Voratoon`");
   });
 
   it("includes a thumbnail only when a cover exists", () => {

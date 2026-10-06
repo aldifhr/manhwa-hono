@@ -290,3 +290,38 @@ export async function loadSourceHealthMap(
   }
   return out;
 }
+
+// ── cron_state: small values that must survive between ticks ─────────────────
+
+/**
+ * Read the rotating walk cursor.
+ *
+ * The shinigami whitelist walk cannot cover every series in one tick (the free
+ * plan caps an invocation at 50 subrequests), so it takes a bounded slice and
+ * stores where it stopped. A missing or unparsable value restarts from 0 — the
+ * walk is idempotent, so a reset costs a repeat pass, never a lost chapter.
+ */
+export async function loadWalkCursor(env: Env): Promise<number> {
+  try {
+    const row = await env.DB.prepare(`SELECT value FROM cron_state WHERE key = 'shinigami_walk_cursor'`)
+      .first<{ value: string }>();
+    const n = Number.parseInt(row?.value ?? "0", 10);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export async function saveWalkCursor(env: Env, cursor: number): Promise<void> {
+  try {
+    await env.DB.prepare(
+      `INSERT INTO cron_state (key, value, updated_at) VALUES ('shinigami_walk_cursor', ?1, ?2)
+       ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+    )
+      .bind(String(Math.max(0, Math.floor(cursor))), nowIso())
+      .run();
+  } catch (err) {
+    // A cursor write failure only costs a repeated slice; never fail the tick.
+    logger.warn("walk cursor save failed", { err: String(err).slice(0, 120) });
+  }
+}

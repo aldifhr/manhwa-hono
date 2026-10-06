@@ -49,21 +49,21 @@ function item(title: string, chapter: string, source: ScrapedItem["source"]): Sc
 
 describe("filterWhitelisted", () => {
   it("keeps an item whose title is whitelisted", () => {
-    const items = [item("Solo Leveling", "120", "ikiru")];
+    const items = [item("Solo Leveling", "120", "voratoon")];
     const kept = filterWhitelisted(items, [{ title_key: "solo leveling" }]);
     expect(kept).toHaveLength(1);
   });
 
   it("drops an item whose title is not whitelisted", () => {
-    const items = [item("Random Series", "5", "ikiru")];
+    const items = [item("Random Series", "5", "voratoon")];
     const kept = filterWhitelisted(items, [{ title_key: "solo leveling" }]);
     expect(kept).toHaveLength(0);
   });
 
   it("matches CROSS-SOURCE on purpose", () => {
-    // The whitelist row is for shinigami; the item came from ikiru. It must
+    // The whitelist row is for shinigami; the item came from voratoon. It must
     // still match — FCFS decides which source wins, not the whitelist.
-    const items = [item("Solo Leveling", "120", "ikiru")];
+    const items = [item("Solo Leveling", "120", "voratoon")];
     const kept = filterWhitelisted(items, [{ title_key: "solo leveling" }]);
     expect(kept).toHaveLength(1);
   });
@@ -75,7 +75,7 @@ describe("filterWhitelisted", () => {
   });
 
   it("returns nothing when the whitelist is empty", () => {
-    const items = [item("Solo Leveling", "120", "ikiru")];
+    const items = [item("Solo Leveling", "120", "voratoon")];
     expect(filterWhitelisted(items, [])).toHaveLength(0);
   });
 });

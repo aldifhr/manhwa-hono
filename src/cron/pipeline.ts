@@ -6,8 +6,8 @@
  *   fetch mode    (doDispatch=false): scrape -> filter fresh -> persist
  *   dispatch mode (doDispatch=true):  read recent_chapters -> whitelist -> send
  *
- * The split exists because the scrape is slow (ikiru ~2s, shinigami up to 24s)
- * while dispatch is fast, so they run on independent schedules and neither
+ * The split exists because the scrape is slow (shinigami has been observed at
+ * 24s) while dispatch is fast, so they run on independent schedules and neither
  * blocks the other.
  */
 import { freshWindowHours, type Env } from "../config";
@@ -17,8 +17,10 @@ import type { ScrapedItem } from "../collectors/common";
 import {
   batchInsertChapters,
   getRecentChapters,
+  loadWalkCursor,
   loadWhitelist,
   saveSourceHealthMap,
+  saveWalkCursor,
   writeCronStatus,
   type ChapterRow,
 } from "../storage/db";

@@ -35,19 +35,15 @@ export const SOURCES = {
     api: "https://api.voratoon.com",
     public: "https://v4.voratoon.com",
   },
-  ikiru: {
-    api: "https://09.ikiru.wtf",
-    public: "https://09.ikiru.wtf",
-  },
 } as const;
 
 export type SourceKey = keyof typeof SOURCES;
 
-export const SOURCE_KEYS: SourceKey[] = ["shinigami", "voratoon", "ikiru"];
+export const SOURCE_KEYS: SourceKey[] = ["shinigami", "voratoon"];
 
 /**
- * A browser UA is not optional. Both ikiru and voratoon sit behind Cloudflare,
- * and the default `Cloudflare-Workers` UA is challenged outright.
+ * A browser UA is not optional. voratoon sits behind Cloudflare, and the
+ * default `Cloudflare-Workers` UA is challenged outright.
  */
 export const HTTP_USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
@@ -57,13 +53,11 @@ export const HTTP_USER_AGENT =
 export const SOURCE_COLORS: Record<string, number> = {
   shinigami: 0xef4444, // red-500
   voratoon: 0xf97316, // orange-500
-  ikiru: 0x22c55e, // green-500
 };
 
 export const SOURCE_LABELS: Record<string, string> = {
   shinigami: "Shinigami",
   voratoon: "Voratoon",
-  ikiru: "Ikiru",
 };
 
 /** Fallback colour for an unknown source (grey-500). */

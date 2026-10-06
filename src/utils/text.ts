@@ -131,21 +131,6 @@ export function isoFromMs(ms: number): string {
   return new Date(ms).toISOString();
 }
 
-/**
- * ikiru labels WIB wall-clock (UTC+7) as if it were UTC.
- *
- * Parsing naively puts every chapter 7 hours in the FUTURE, and a future
- * timestamp fails the freshness window, so the whole feed silently vanishes.
- * Shift back by the offset after parsing.
- */
-const IKIRU_TZ_OFFSET_H = 7;
-
-export function parseIkiruTs(value: unknown): number | null {
-  const ms = parseTs(value);
-  if (ms === null) return null;
-  return ms - IKIRU_TZ_OFFSET_H * 3600 * 1000;
-}
-
 /** Truncate to a max length, appending an ellipsis when cut. */
 export function truncate(input: string, max: number): string {
   const s = String(input ?? "");

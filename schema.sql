@@ -174,6 +174,18 @@ CREATE TABLE IF NOT EXISTS cron_run_status (
 CREATE INDEX IF NOT EXISTS cron_run_status_created_at_idx
   ON cron_run_status (created_at DESC);
 
+-- ── cron_state ───────────────────────────────────────────────────────────────
+-- Small key/value scratch space for values that must survive between ticks.
+-- Currently holds the rotating cursor for the shinigami whitelist walk: the
+-- Workers free plan allows 50 subrequests per invocation, so the walk covers a
+-- bounded slice per tick and resumes where it left off instead of trying (and
+-- failing) to walk every series at once.
+CREATE TABLE IF NOT EXISTS cron_state (
+  key        TEXT PRIMARY KEY,
+  value      TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 -- ── series_meta ──────────────────────────────────────────────────────────────
 -- Enriched metadata cache, keyed by (title_key, source).
 CREATE TABLE IF NOT EXISTS series_meta (

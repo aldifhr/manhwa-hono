@@ -14,8 +14,14 @@
 import { SOURCE_KEYS, disabledSources, type Env } from "../config";
 import { getLogger } from "../logger";
 import { fcfsKey, slugifyTitleKey } from "../utils/text";
-import { loadExcludedKeys, loadSourceHealthMap, loadWhitelist, type WhitelistRow } from "../storage/db";
-import { collectIkiru } from "./ikiru";
+import {
+  loadExcludedKeys,
+  loadSourceHealthMap,
+  loadWalkCursor,
+  loadWhitelist,
+  saveWalkCursor,
+  type WhitelistRow,
+} from "../storage/db";
 import { collectShinigamiLatest, collectShinigamiWhitelisted } from "./shinigami";
 import { collectVoratoon } from "./voratoon";
 import {
@@ -115,8 +121,6 @@ export async function collectRecentChapters(
           );
         } else if (src === "voratoon") {
           items = await withTimeout(collectVoratoon(ctx, false), SOURCE_TIMEOUT_MS, "voratoon");
-        } else if (src === "ikiru") {
-          items = await withTimeout(collectIkiru(ctx, false), SOURCE_TIMEOUT_MS, "ikiru");
         }
         logger.info("collect done", { source: src, count: items.length });
         return { source: src, items, outcome: healthyOutcome(Date.now() - t0) };
@@ -139,12 +143,14 @@ export async function collectRecentChapters(
   if (opts.withWhitelistedShinigami && !disabled.has("shinigami")) {
     try {
       const wl = await loadWhitelist(env);
-      const extra = await withTimeout(
-        collectShinigamiWhitelisted(ctx, wl, hours),
+      const cursor = await loadWalkCursor(env);
+      const walk = await withTimeout(
+        collectShinigamiWhitelisted(ctx, wl, hours, { cursor }),
         SOURCE_TIMEOUT_MS,
         "shinigami-whitelisted",
       );
-      items.push(...extra);
+      items.push(...walk.items);
+      await saveWalkCursor(env, walk.nextCursor);
     } catch (err) {
       logger.warn("collect whitelisted shinigami failed", { err: String(err).slice(0, 120) });
     }

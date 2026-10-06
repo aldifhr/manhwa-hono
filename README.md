@@ -2,7 +2,7 @@
 
 A Hono / Cloudflare Workers port of the `manhwa-scanner` Python backend.
 
-Tracks manhwa chapters across three sources (shinigami, voratoon, ikiru),
+Tracks manhwa chapters across two sources (shinigami, voratoon),
 keeps a per-source whitelist, and posts new chapters to Discord.
 
 The Python backend in `manhwa-scanner` is unchanged and still runs the live
@@ -19,7 +19,6 @@ without a machine to babysit.
 | source | access | notes |
 |---|---|---|
 | shinigami | `api.shngm.io/v1` | not behind Cloudflare, plain fetch works |
-| ikiru | `09.ikiru.wtf` | Cloudflare-fronted, but a Worker's own egress reaches it |
 | voratoon | `api.voratoon.com` | **blocked per-IP at Cloudflare's edge** — needs the proxy below |
 
 ### The voratoon egress problem
@@ -81,14 +80,6 @@ forever. `test/whitelist-paths.test.ts` pins both.
 **Claim expiry is load-bearing.** The claim read filters on `expires_at`, so the
 `ON CONFLICT` write must too — `DO NOTHING` lets an expired claim block
 re-claiming permanently, and the chapter is never sent.
-
-**ikiru timestamps are mislabelled.** The API emits WIB wall-clock (UTC+7) with a
-`Z` suffix. Parsing naively puts every chapter 7 hours in the future and the
-freshness window then drops the entire feed. `parseIkiruTs()` shifts it back.
-
-**ikiru chapter URLs use a hyphen**: `/manga/{slug}/chapter-{n}`. The slash form
-404s, which makes every Discord link dead while the chapter still looks
-collected.
 
 **Voratoon's catalogue field is `chapter`** (a list of `{id, number, updatedAt}`),
 not `latestChapter`, and series metadata lives under `metadata` with genres at

@@ -8,7 +8,7 @@
 import { DEFAULT_COLOR, SOURCE_COLORS, SOURCE_LABELS } from "../config";
 import { escapeDiscordMd, truncate } from "../utils/text";
 
-/** Colours: shinigami red, voratoon orange, ikiru green. */
+/** Colours: shinigami red, voratoon orange. */
 export function colorFor(source: string): number {
   return SOURCE_COLORS[source] ?? DEFAULT_COLOR;
 }

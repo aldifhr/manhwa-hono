@@ -5,7 +5,6 @@ import {
   normalizeTitleKey,
   slugifyTitleKey,
   deslugifyTitleKey,
-  parseIkiruTs,
   stripHtml,
 } from "../src/utils/text";
 
@@ -108,21 +107,6 @@ describe("fcfsKey", () => {
 
   it("differs when the chapter differs", () => {
     expect(fcfsKey("X", "1")).not.toBe(fcfsKey("X", "2"));
-  });
-});
-
-describe("parseIkiruTs", () => {
-  it("shifts WIB-labelled-as-UTC back by 7 hours", () => {
-    // 2026-10-06T23:00:00Z is really 16:00 UTC.
-    const ms = parseIkiruTs("2026-10-06T23:00:00.000Z");
-    expect(ms).not.toBeNull();
-    expect(new Date(ms as number).toISOString()).toBe("2026-10-06T16:00:00.000Z");
-  });
-
-  it("returns null on garbage rather than throwing", () => {
-    expect(parseIkiruTs("")).toBeNull();
-    expect(parseIkiruTs(null)).toBeNull();
-    expect(parseIkiruTs("not-a-date")).toBeNull();
   });
 });
 

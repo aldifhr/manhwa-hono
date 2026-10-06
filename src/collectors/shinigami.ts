@@ -29,6 +29,30 @@ const logger = getLogger("cron:collect:shinigami");
 const PER_PAGE = 100;
 const MAX_PAGES = 5;
 
+/**
+ * How many whitelisted series one tick may walk.
+ *
+ * Two ceilings shape this, and the tighter one wins:
+ *
+ *   * Subrequests — the Workers FREE plan allows 50 per invocation. Walking all
+ *     ~246 whitelisted shinigami series would need 246 requests in one tick and
+ *     be killed outright.
+ *   * Wall time — the walk is SERIAL and each series costs one request, so the
+ *     budget must also fit the collector's 60s timeout. Measured against the
+ *     live API: roughly 1s per series when the upstream is warm, so 12 leaves
+ *     comfortable headroom. A larger budget does not degrade gracefully — the
+ *     whole walk is abandoned and the cursor never advances, so nothing gets
+ *     covered at all.
+ *
+ * The walk therefore takes a bounded slice per tick and rotates through the
+ * rest via a stored cursor, covering every series within a few ticks.
+ *
+ * The latest-updates feed is the primary path (one request per page, newest
+ * chapter per series); this walk exists to catch the chapters BETWEEN the
+ * ceiling and the newest one, which the feed collapses into a single row.
+ */
+const WALK_BUDGET_PER_TICK = 12;
+
 /** Map shinigami country_id -> the origin codes the pipeline uses. */
 function originOf(item: ShinigamiLatestItem): string {
   const c = String(item.country_id ?? "").toUpperCase();
@@ -120,13 +144,14 @@ export async function collectShinigamiWhitelisted(
   ctx: CollectorContext,
   whitelist: Array<{ title_key: string; source: string; url?: string | null; series_url?: string | null; title?: string | null }>,
   hoursCutoff: number,
-): Promise<ScrapedItem[]> {
+  opts: { budget?: number; cursor?: number } = {},
+): Promise<{ items: ScrapedItem[]; nextCursor: number; total: number }> {
   const publicBase = shinigamiPublicBase();
   const items: ScrapedItem[] = [];
   const seenIds = new Set<string>();
 
   // Collect the manga ids to walk.
-  const targets: Array<{ mangaId: string; titleKey: string; title: string }> = [];
+  const allTargets: Array<{ mangaId: string; titleKey: string; title: string }> = [];
   for (const w of whitelist) {
     if (w.source !== "shinigami") continue;
     const titleKey = slugifyTitleKey(w.title_key ?? "");
@@ -143,10 +168,28 @@ export async function collectShinigamiWhitelisted(
     }
     if (!mangaId || seenIds.has(mangaId)) continue;
     seenIds.add(mangaId);
-    targets.push({ mangaId, titleKey, title: String(w.title ?? titleKey.replace(/-/g, " ")) });
+    allTargets.push({ mangaId, titleKey, title: String(w.title ?? titleKey.replace(/-/g, " ")) });
   }
 
-  if (targets.length === 0) return [];
+  const total = allTargets.length;
+  if (total === 0) return { items: [], nextCursor: 0, total: 0 };
+
+  // Bounded slice, rotating via the cursor so successive ticks cover the rest.
+  const budget = Math.max(1, opts.budget ?? WALK_BUDGET_PER_TICK);
+  const start = total > 0 ? (opts.cursor ?? 0) % total : 0;
+  const targets: typeof allTargets = [];
+  for (let i = 0; i < Math.min(budget, total); i++) {
+    const t = allTargets[(start + i) % total];
+    if (t) targets.push(t);
+  }
+  const nextCursor = (start + targets.length) % total;
+
+  logger.info("shinigami walk slice", {
+    walked: targets.length,
+    total,
+    from: start,
+    next: nextCursor,
+  });
 
   for (const t of targets) {
     let chapters: Awaited<ReturnType<typeof getChapters>>;
@@ -205,6 +248,7 @@ export async function collectShinigamiWhitelisted(
   logger.info("shinigami whitelisted collect done", {
     items: items.length,
     series: targets.length,
+    next_cursor: nextCursor,
   });
-  return items;
+  return { items, nextCursor, total };
 }
