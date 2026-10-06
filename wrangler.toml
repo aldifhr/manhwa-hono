@@ -10,10 +10,14 @@ compatibility_flags = ["nodejs_compat"]
 [triggers]
 crons = ["*/5 * * * *"]
 
-# D1 — the SQLite database. Create it once with:
-#   wrangler d1 create manhwa
-# then paste the returned database_id here and run:
-#   wrangler d1 execute manhwa --remote --file=./schema.sql
+# D1 — the SQLite database.
+#
+# Create it once, then paste the id below:
+#   npx wrangler d1 create manhwa
+#   npx wrangler d1 execute manhwa --remote --file=./schema.sql
+#
+# The id is NOT a secret (it is useless without account access), so it belongs
+# in this file. Everything that IS a secret goes in `wrangler secret put`.
 [[d1_databases]]
 binding = "DB"
 database_name = "manhwa"
@@ -24,24 +28,31 @@ ENVIRONMENT = "production"
 SCRAPE_FRESH_WINDOW_HOURS = "24"
 # Comma-separated, matching the Python DISABLED_SOURCES.
 DISABLED_SOURCES = ""
-MONITOR_AUTH_TOKEN = "local-dev-token"
 
 # Voratoon egress proxy. api.voratoon.com is blocked at Cloudflare's edge for
-# the VPS's IP, so voratoon is unreachable directly. This Worker-to-Worker hop
-# runs on Cloudflare's own network and reaches it fine.
+# the VPS's IP, so voratoon is unreachable directly from a self-hosted runner.
+# This Worker-to-Worker hop runs on Cloudflare's own network and reaches it.
 # Leave empty to call the API directly (works when deployed off-VPS).
 VORATOON_PROXY_URL = "https://voratoon-proxy.monsterdrop7.workers.dev"
-DISCORD_WEBHOOK_URL = "http://127.0.0.1:8801/__test_webhook"
 
-# ── Secrets — set these, do NOT put them here ────────────────────────────────
-#   wrangler secret put DISCORD_WEBHOOK_URL
-#   wrangler secret put ADMIN_REPORT_WEBHOOK_URL
-#   wrangler secret put MONITOR_AUTH_TOKEN
+# ── SECRETS — never put these in [vars] ──────────────────────────────────────
+# This file is committed to a public repo. A value written here is public.
+# Set them with:
+#
+#   npx wrangler secret put DISCORD_WEBHOOK_URL
+#   npx wrangler secret put ADMIN_REPORT_WEBHOOK_URL
+#   npx wrangler secret put MONITOR_AUTH_TOKEN
+#
+# or, for a git-connected build, in the dashboard under
+# Settings → Variables and Secrets → add as "Secret".
 #
 #   DISCORD_WEBHOOK_URL       chapter feed — where notifications land
 #   ADMIN_REPORT_WEBHOOK_URL  alerts only; keep it a DIFFERENT channel so a
 #                             pipeline error never lands in the reader feed
 #   MONITOR_AUTH_TOKEN        bearer for the mutating API routes
+#
+# For LOCAL development use `.dev.vars` (gitignored), which overrides [vars]
+# without ever touching this file. See `.dev.vars.example`.
 
 [observability]
 enabled = true

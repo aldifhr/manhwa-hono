@@ -1,0 +1,17 @@
+# Local development overrides — copy to `.dev.vars` and fill in.
+#
+# `.dev.vars` is gitignored. These values override `[vars]` in wrangler.toml
+# for `wrangler dev` only, so local test values never end up in the committed
+# config. Putting a test token in wrangler.toml publishes it.
+#
+#   cp .dev.vars.example .dev.vars
+
+# Bearer for the mutating API routes. Any value works locally.
+MONITOR_AUTH_TOKEN=local-dev-token
+
+# Chapter feed. Leave empty to exercise dry runs only — a dry run needs no
+# webhook, so `POST /api/v1/cron/dispatch?dry_run=true` works without one.
+DISCORD_WEBHOOK_URL=
+
+# Alerts. Point at a throwaway channel, never the reader feed.
+ADMIN_REPORT_WEBHOOK_URL=
