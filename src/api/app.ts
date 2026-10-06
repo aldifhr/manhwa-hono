@@ -45,11 +45,49 @@ app.get("/", (c) =>
 );
 
 app.get("/health", async (c) => {
+  // Two checks, because they fail differently. `SELECT 1` proves the binding
+  // resolves; the table probe proves the SCHEMA was applied. A Worker deployed
+  // before `d1 execute --file=./schema.sql` passes the first and fails every
+  // real query, so reporting only connectivity would call it healthy.
   try {
     await c.env.DB.prepare("SELECT 1").first();
-    return c.json({ status: "healthy", db: "ok" });
   } catch (err) {
-    return c.json({ status: "unhealthy", db: String(err).slice(0, 200) }, 503);
+    return c.json(
+      { status: "unhealthy", db: "unreachable", error: String(err).slice(0, 200) },
+      503,
+    );
+  }
+
+  const REQUIRED = ["whitelist", "recent_chapters", "dispatch_history"];
+  try {
+    const res = await c.env.DB.prepare(
+      `SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (${REQUIRED.map(
+        (_, i) => `?${i + 1}`,
+      ).join(",")})`,
+    )
+      .bind(...REQUIRED)
+      .all<{ name: string }>();
+
+    const found = new Set((res.results ?? []).map((r) => r.name));
+    const missing = REQUIRED.filter((t) => !found.has(t));
+    if (missing.length > 0) {
+      return c.json(
+        {
+          status: "unhealthy",
+          db: "ok",
+          schema: "missing",
+          missing,
+          hint: "npx wrangler d1 execute manhwa --remote --file=./schema.sql",
+        },
+        503,
+      );
+    }
+    return c.json({ status: "healthy", db: "ok", schema: "ok" });
+  } catch (err) {
+    return c.json(
+      { status: "unhealthy", db: "ok", schema: "unreadable", error: String(err).slice(0, 200) },
+      503,
+    );
   }
 });
 

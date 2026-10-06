@@ -21,7 +21,7 @@ crons = ["*/5 * * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "manhwa"
-database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
+database_id = "8cb0ae09-8e34-4f9f-908f-de6e99771e64"
 
 [vars]
 ENVIRONMENT = "production"
