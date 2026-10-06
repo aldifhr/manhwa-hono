@@ -1,0 +1,50 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "manhwa-hono"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+# The cron tick. 5 minutes matches the Python backend's cadence, which was
+# chosen so a chapter is announced within one source's publish-to-scrape lag.
+# Each tick runs the fetch pass then the dispatch pass.
+[triggers]
+crons = ["*/5 * * * *"]
+
+# D1 — the SQLite database. Create it once with:
+#   wrangler d1 create manhwa
+# then paste the returned database_id here and run:
+#   wrangler d1 execute manhwa --remote --file=./schema.sql
+[[d1_databases]]
+binding = "DB"
+database_name = "manhwa"
+database_id = "REPLACE_WITH_YOUR_DATABASE_ID"
+
+[vars]
+ENVIRONMENT = "production"
+SCRAPE_FRESH_WINDOW_HOURS = "24"
+# Comma-separated, matching the Python DISABLED_SOURCES.
+DISABLED_SOURCES = ""
+MONITOR_AUTH_TOKEN = "local-dev-token"
+
+# Voratoon egress proxy. api.voratoon.com is blocked at Cloudflare's edge for
+# the VPS's IP, so voratoon is unreachable directly. This Worker-to-Worker hop
+# runs on Cloudflare's own network and reaches it fine.
+# Leave empty to call the API directly (works when deployed off-VPS).
+VORATOON_PROXY_URL = "https://voratoon-proxy.monsterdrop7.workers.dev"
+DISCORD_WEBHOOK_URL = "http://127.0.0.1:8801/__test_webhook"
+
+# ── Secrets — set these, do NOT put them here ────────────────────────────────
+#   wrangler secret put DISCORD_WEBHOOK_URL
+#   wrangler secret put ADMIN_REPORT_WEBHOOK_URL
+#   wrangler secret put MONITOR_AUTH_TOKEN
+#
+#   DISCORD_WEBHOOK_URL       chapter feed — where notifications land
+#   ADMIN_REPORT_WEBHOOK_URL  alerts only; keep it a DIFFERENT channel so a
+#                             pipeline error never lands in the reader feed
+#   MONITOR_AUTH_TOKEN        bearer for the mutating API routes
+
+[observability]
+enabled = true
+
+[observability.logs]
+invocation_logs = true
