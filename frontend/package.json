@@ -25,7 +25,7 @@
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^13.1.1",
     "geist": "^1.7.2",
-    "kmenu": "^2.0.4",
+    "kmenu": "2.0.3",
     "motion": "^13.4.4",
     "next": "^16.3.4",
     "react": "^19.1.0",
