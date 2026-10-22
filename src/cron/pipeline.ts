@@ -166,8 +166,7 @@ export async function runPipeline(
       const rows = await getRecentChapters(env, hours);
       const items = rows.map(rowToItem);
 
-      const whitelist = await loadWhitelist(env);
-      const toDispatch = whitelist.length > 0 ? filterWhitelisted(items, whitelist) : [];
+      const toDispatch = items; // no whitelist filter — send all fresh chapters
 
       const send = await dispatch(env, toDispatch, { dryRun: opts.dryRun ?? false });
       stats.sent = send.sent;

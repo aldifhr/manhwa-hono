@@ -141,6 +141,8 @@ app.delete("/api/v1/whitelist/:titleKey/:source", async (c) => {
 
 // ── Chapters ─────────────────────────────────────────────────────────────────
 
+// Alias for frontend (no /v1 prefix)
+app.get("/api/whitelist", (c) => c.redirect("/api/v1/whitelist"));
 app.get("/api/v1/chapters", async (c) => {
   const hours = Number.parseInt(c.req.query("hours") ?? "24", 10);
   const rows = await getRecentChapters(c.env, Number.isFinite(hours) ? hours : 24);
