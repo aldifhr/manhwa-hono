@@ -24,6 +24,7 @@ import {
 } from "../storage/db";
 import { collectShinigamiLatest, collectShinigamiWhitelisted } from "./shinigami";
 import { collectVoratoon } from "./voratoon";
+import { collectIkiru } from "./ikiru";
 import {
   classifyFailure,
   healthyOutcome,
@@ -121,6 +122,8 @@ export async function collectRecentChapters(
           );
         } else if (src === "voratoon") {
           items = await withTimeout(collectVoratoon(ctx, false), SOURCE_TIMEOUT_MS, "voratoon");
+        } else if (src === "ikiru") {
+          items = await withTimeout(collectIkiru(ctx, false), SOURCE_TIMEOUT_MS, "ikiru");
         }
         logger.info("collect done", { source: src, count: items.length });
         return { source: src, items, outcome: healthyOutcome(Date.now() - t0) };
