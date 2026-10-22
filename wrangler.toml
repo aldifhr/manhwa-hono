@@ -8,7 +8,7 @@ compatibility_flags = ["nodejs_compat"]
 # chosen so a chapter is announced within one source's publish-to-scrape lag.
 # Each tick runs the fetch pass then the dispatch pass.
 [triggers]
-crons = ["*/5 * * * *"]
+crons = ["*/5 * * * *", "*/10 * * * *"]
 
 # D1 — the SQLite database.
 #

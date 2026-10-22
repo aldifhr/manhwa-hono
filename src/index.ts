@@ -43,26 +43,49 @@ export default {
     const cron = controller.cron ?? "";
     logger.info("scheduled tick", { cron });
 
-    // Both passes on every tick: fetch first so dispatch has fresh rows.
-    // waitUntil keeps the worker alive for the second pass after the response.
+    // Dispatch-only tick: run dispatch pass when cron is */10.
+    if (cron === "*/10 * * * *") {
+      ctx.waitUntil(
+        (async () => {
+          try {
+            const dispatchStats = await runDispatchPass(env, false);
+            if (dispatchStats.status === "error") {
+              const hook = adminWebhook(env);
+              if (hook) {
+                await sendEmbeds(hook, [
+                  {
+                    title: "⚠️ Dispatch error",
+                    color: 0xef4444,
+                    description: `dispatch: \`${dispatchStats.status}\` (sent ${dispatchStats.sent})`,
+                    timestamp: new Date().toISOString(),
+                  },
+                ]);
+              }
+            }
+          } catch (err) {
+            logger.error("dispatch tick failed", { err: String(err).slice(0, 300) });
+          }
+        })(),
+      );
+      return;
+    }
+
+    // Fetch-only tick (*/5): scrape and persist.
     ctx.waitUntil(
       (async () => {
         try {
           const fetchStats = await runFetchPass(env, null);
-          const dispatchStats = await runDispatchPass(env, false);
 
           // Alert only on a hard failure — a healthy tick must stay silent so
           // the admin channel does not become noise.
-          if (fetchStats.status === "error" || dispatchStats.status === "error") {
+          if (fetchStats.status === "error") {
             const hook = adminWebhook(env);
             if (hook) {
               await sendEmbeds(hook, [
                 {
                   title: "⚠️ Pipeline error",
                   color: 0xef4444,
-                  description:
-                    `fetch: \`${fetchStats.status}\` (${fetchStats.fetched} items)\n` +
-                    `dispatch: \`${dispatchStats.status}\` (sent ${dispatchStats.sent})`,
+                  description: `fetch: \`${fetchStats.status}\` (${fetchStats.fetched} items)`,
                   timestamp: new Date().toISOString(),
                 },
               ]);
