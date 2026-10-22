@@ -27,7 +27,7 @@ database_id = "8cb0ae09-8e34-4f9f-908f-de6e99771e64"
 ENVIRONMENT = "production"
 SCRAPE_FRESH_WINDOW_HOURS = "24"
 # Comma-separated, matching the Python DISABLED_SOURCES.
-DISABLED_SOURCES = ""
+DISABLED_SOURCES = "voratoon"
 
 # Voratoon egress proxy. api.voratoon.com is blocked at Cloudflare's edge for
 # the VPS's IP, so voratoon is unreachable directly from a self-hosted runner.
