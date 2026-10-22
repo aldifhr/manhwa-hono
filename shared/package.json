@@ -1,0 +1,22 @@
+{
+  "name": "@manhwa-scanner/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "generate": "node ./scripts/generate.js",
+    "generate:types": "openapi-typescript ./openapi.json -o ./src/generated/openapi.ts",
+    "test": "echo \"shared: no tests\"",
+    "lint": "echo \"shared: no lint\""
+  },
+  "dependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.4.2",
+    "typescript": "^5.5.0"
+  }
+}
