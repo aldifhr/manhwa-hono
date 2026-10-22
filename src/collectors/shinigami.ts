@@ -18,6 +18,7 @@ import { getLogger } from "../logger";
 import {
   getChapters,
   getLatestUpdates,
+  getSeriesMeta,
   shinigamiPublicBase,
   type ShinigamiLatestItem,
 } from "../scrapers/shinigami";
@@ -109,6 +110,26 @@ export async function collectShinigamiLatest(
     if (chapterNum(normalizeChapter(chapterStr)) <= ceiling) continue;
 
     const url = `${publicBase}/chapter/${mangaId}-${chapterStr}`;
+    // Fetch metadata (cover, rating, genres, description) from series detail.
+    let meta: { cover: string | null; rating: number | null; genres: string[]; description: string } = {
+      cover: coverOf(it),
+      rating: null,
+      genres: [],
+      description: "",
+    };
+    try {
+      const m = await getSeriesMeta(mangaId);
+      if (m) {
+        meta = {
+          cover: m.cover ?? coverOf(it),
+          rating: m.rating,
+          genres: m.genres,
+          description: m.description,
+        };
+      }
+    } catch {
+      // metadata fetch failed — keep defaults
+    }
     items.push({
       title,
       title_key: titleKey,
@@ -117,14 +138,14 @@ export async function collectShinigamiLatest(
       url,
       chapter_url: url,
       source: "shinigami",
-      cover: coverOf(it),
+      cover: meta.cover,
       series_url: `${publicBase}/series/${mangaId}`,
       origin,
       updated_time: iso,
       release_date: iso,
-      rating: null,
-      genres: [],
-      description: "",
+      rating: meta.rating,
+      genres: meta.genres,
+      description: meta.description,
       type: typeOf(origin),
     });
   }
