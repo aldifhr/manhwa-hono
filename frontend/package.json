@@ -15,7 +15,7 @@
   "dependencies": {
     "@base-ui/react": "^1.7.0",
     "@kmenu/react": "^2.0.4",
-    "@manhwa-scanner/shared": "workspace:*",
+    "@manhwa-scanner/shared": "file:../shared",
     "@phosphor-icons/react": "^2.1.10",
     "@tabler/icons-react": "^3.48.0",
     "@tanstack/react-query": "^5.101.1",
